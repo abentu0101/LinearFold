@@ -1,16 +1,19 @@
 LinearFold: Linear-Time Prediction for RNA Secondary Structures
 ============================================
 
-The source code of the LinearFold project, a linear-time RNA secondary structure prediction algorithm.
+This repository contains the C++ source code for the LinearFold project,
+the first linear-time prediction algorithm/software for RNA secondary structures.
 
-Paper:
+Preprint:
 LinearFold: Linear-Time Prediction of RNA Secondary Structures
 
-Dezhong Deng, Kai Zhao, David Hendrix, David Mathews, Liang Huang
+Dezhong Deng, Kai Zhao, David Hendrix, David Mathews, and Liang Huang*
+
+*corresponding author
 
 doi: https://doi.org/10.1101/263509
 
-Our online web server is available at: http://linearfold.eecs.oregonstate.edu
+Web server: http://linearfold.eecs.oregonstate.edu
 
 #### To Compile
 LinearFold can be compiled with ```cmake``` with following commands:
