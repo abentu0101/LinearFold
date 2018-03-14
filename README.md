@@ -1,4 +1,4 @@
-Linear-Time Prediction for RNA Secondary Structures
+LinearFold: Linear-Time Prediction for RNA Secondary Structures
 ============================================
 
 The source code of the LinearFold project, a linear-time RNA secondary structure prediction algorithm.
