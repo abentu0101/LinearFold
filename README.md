@@ -1,9 +1,7 @@
-RNA Sequence Parser for Structure Prediction
+Linear-Time Prediction for RNA Secondary Structures
 ============================================
 
 The source code of the LinearFold project, a linear-time RNA secondary structure prediction algorithm.
-
-### Linear-Time Prediction for RNA Secondary Structures
 
 Paper:
 LinearFold: Linear-Time Prediction of RNA Secondary Structures
@@ -11,6 +9,8 @@ LinearFold: Linear-Time Prediction of RNA Secondary Structures
 Dezhong Deng, Kai Zhao, David Hendrix, David Mathews, Liang Huang
 
 doi: https://doi.org/10.1101/263509
+
+Our online web server is available at: http://linearfold.eecs.oregonstate.edu
 
 #### To Compile
 LinearFold can be compiled with ```cmake``` with following commands:
@@ -31,7 +31,7 @@ Note that there are two external libraries stated in ```CMakeLists.txt``` file:
 #### To Run
 The LinearFold parser can be run with:
 ```
-linearfold -f sequence_file -b [beam_size]
+linearfold -f sequence_file [-b beam_size]
 ```
 
 The default beam_size is infinite.
