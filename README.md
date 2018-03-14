@@ -7,7 +7,9 @@ The source code of the LinearFold project, a linear-time RNA secondary structure
 
 Paper:
 LinearFold: Linear-Time Prediction of RNA Secondary Structures
+
 Dezhong Deng, Kai Zhao, David Hendrix, David Mathews, Liang Huang
+
 doi: https://doi.org/10.1101/263509
 
 #### To Compile
@@ -29,8 +31,13 @@ Note that there are two external libraries stated in ```CMakeLists.txt``` file:
 #### To Run
 The LinearFold parser can be run with:
 ```
-linearfold sequence_file [beam_size]
+linearfold -f sequence_file -b [beam_size]
 ```
 
 The default beam_size is infinite.
 
+For example:
+#### Example Run
+```
+./linearfold -f ../testseq -b 100
+```
