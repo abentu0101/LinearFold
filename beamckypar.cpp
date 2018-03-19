@@ -19,7 +19,9 @@
 #include "cxxopts.hpp"
 
 #include "utility.h"
+#include "utility_v.h"
 
+#define SPECIAL_HP
 
 using namespace std;
 
@@ -238,9 +240,25 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
         }
     }
 
+    vector<int> if_tetraloops;
+    vector<int> if_hexaloops;
+    vector<int> if_triloops;
+
+#ifdef SPECIAL_HP
+    //if(special_hp)
+    if (use_vienna)
+        v_init_tetra_hex_tri(seq, seq_length, if_tetraloops, if_hexaloops, if_triloops);
+#endif
+
     // start CKY decoding
-    if(seq_length > 0) bestC[0].set(score_external_unpaired(0, 0), MANNER_C_eq_C_plus_U);
-    if(seq_length > 1) bestC[1].set(score_external_unpaired(0, 1), MANNER_C_eq_C_plus_U);
+    if (use_vienna) {
+        if(seq_length > 0) bestC[0].set(v_score_external_unpaired(0, 0), MANNER_C_eq_C_plus_U);
+        if(seq_length > 1) bestC[1].set(v_score_external_unpaired(0, 1), MANNER_C_eq_C_plus_U);
+    }
+    else {
+        if(seq_length > 0) bestC[0].set(score_external_unpaired(0, 0), MANNER_C_eq_C_plus_U);
+        if(seq_length > 1) bestC[1].set(score_external_unpaired(0, 1), MANNER_C_eq_C_plus_U);
+    }
     ++nos_C;
 
     // from left to right
@@ -266,7 +284,25 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                 if (jnext != -1) {
                     int nucjnext = nucs[jnext];
                     int nucjnext_1 = (jnext - 1) > -1 ? nucs[jnext - 1] : -1;
-                    double newscore = score_hairpin(j, jnext, nucj, nucj1, nucjnext_1, nucjnext);
+
+                    double newscore;
+
+                    if (use_vienna) {
+                        int tetra_hex_tri = -1;
+#ifdef SPECIAL_HP
+                        // if (special_hp) {
+                        if (jnext-j-1 == 4) // 6:tetra
+                            tetra_hex_tri = if_tetraloops[j];
+                        else if (jnext-j-1 == 6) // 8:hexa
+                            tetra_hex_tri = if_hexaloops[j];
+                        else if (jnext-j-1 == 3) // 5:tri
+                            tetra_hex_tri = if_triloops[j];
+                        // }
+#endif
+                        newscore = - v_score_hairpin(j, jnext, nucj, nucj1, nucjnext_1, nucjnext, tetra_hex_tri);
+                    }
+                    else
+                        newscore = score_hairpin(j, jnext, nucj, nucj1, nucjnext_1, nucjnext);
                     // this candidate must be the best one at [j, jnext]
                     // so no need to check the score
                     update_if_better(bestH[jnext][j], newscore, MANNER_H);
@@ -290,7 +326,24 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                         int nucjnext_1 = (jnext - 1) > -1 ? nucs[jnext - 1] : -1;
 
                         // 1. extend h(i, j) to h(i, jnext)
-                        double newscore = score_hairpin(i, jnext, nuci, nuci1, nucjnext_1, nucjnext);
+                        double newscore;
+
+                        if (use_vienna) {
+                            int tetra_hex_tri = -1;
+#ifdef SPECIAL_HP
+                            // if (special_hp) {
+                            if (jnext-i-1 == 4) // 6:tetra
+                                tetra_hex_tri = if_tetraloops[i];
+                            else if (jnext-i-1 == 6) // 8:hexa
+                                tetra_hex_tri = if_hexaloops[i];
+                            else if (jnext-i-1 == 3) // 5:tri
+                                tetra_hex_tri = if_triloops[i];
+                            // }
+#endif
+                            newscore = - v_score_hairpin(i, jnext, nuci, nuci1, nucjnext_1, nucjnext, tetra_hex_tri);
+                        }
+                        else
+                            newscore = score_hairpin(i, jnext, nuci, nuci1, nucjnext_1, nucjnext);
                         // this candidate must be the best one at [i, jnext]
                         // so no need to check the score
                         update_if_better(bestH[jnext][i], newscore, MANNER_H);
@@ -328,7 +381,11 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                     int new_l2 = state.trace.paddings.l2 + jnext - j;
                     if (jnext != -1 && new_l1 + new_l2 <= SINGLE_MAX_LEN) {
                         // 1. extend (i, j) to (i, jnext)
-                        double newscore = state.score + score_multi_unpaired(j, jnext - 1);
+                        double newscore;
+                        if (use_vienna)
+                            newscore = state.score - v_score_multi_unpaired(j, jnext - 1);
+                        else
+                            newscore = state.score + score_multi_unpaired(j, jnext - 1);
                         // this candidate must be the best one at [i, jnext]
                         // so no need to check the score
                         update_if_better(bestMulti[jnext][i], newscore, MANNER_MULTI,
@@ -341,8 +398,13 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
 
                 // 2. generate P (i, j)
                 {
-                    double newscore = state.score +
-                                      score_multi(i, j, nuci, nuci1, nucs[j-1], nucj, seq_length);
+                    double newscore;
+                    if (use_vienna)
+                        newscore = state.score -
+                            v_score_multi(i, j, nuci, nuci1, nucs[j-1], nucj, seq_length);
+                    else
+                        newscore = state.score +
+                            score_multi(i, j, nuci, nuci1, nucs[j-1], nucj, seq_length);
                     update_if_better(beamstepP[i], newscore, MANNER_P_eq_MULTI);
                     ++ nos_P;
                 }
@@ -369,27 +431,50 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                 // 1. generate new helix / single_branch
                 // new state is of shape p..i..j..q
                 if (i >0 && j<seq_length-1) {
-                    double precomputed = score_junction_B(j, i, nucj, nucj1, nuci_1, nuci);
+                    double precomputed;
+                    if (use_vienna)
+                        precomputed = 0;
+                    else
+                        precomputed = score_junction_B(j, i, nucj, nucj1, nuci_1, nuci);
                     for (int p = i - 1; p > std::max(i - SINGLE_MAX_LEN, -1); --p) {
                         int nucp = nucs[p];
                         int q = next_pair[nucp][j];
                         while (q != -1 && ((i - p) + (q - j) <= SINGLE_MAX_LEN)) {
                             int nucq = nucs[q];
+                            int nucp_1 = nucs[p - 1];
                             int nucp1 = nucs[p + 1];
                             int nucq_1 = nucs[q - 1];
+                            int nucq1 = nucs[q + 1];
+                            int nuci1 = nucs[i + 1];
+                            int nucj_1 = nucs[j - 1];
+                            // int nucq = nucs[q];
+                            // int nucp1 = nucs[p + 1];
+                            // int nucq_1 = nucs[q - 1];
 
                             if (p == i - 1 && q == j + 1) {
                                 // helix
-                                double newscore = score_helix(nucp, nucp1, nucq_1, nucq) + state.score;
+                                double newscore;
+                                if (use_vienna)
+                                    newscore = -v_score_single(p,q,i,j, nucp, nucp1, nucq_1, nucq,
+                                                             nuci_1, nuci, nucj, nucj1)
+                                        + state.score;
+                                else
+                                    newscore = score_helix(nucp, nucp1, nucq_1, nucq) + state.score;
                                 update_if_better(bestP[q][p], newscore, MANNER_HELIX);
                                 ++nos_P;
                             } else {
                                 // single branch
-                                double newscore = score_junction_B(p, q, nucp, nucp1, nucq_1, nucq) +
-                                                  precomputed +
-                                                  score_single_without_junctionB(p, q, i, j,
-                                                                                 nuci_1, nuci, nucj, nucj1) +
-                                                  state.score;
+                                double newscore;
+                                if (use_vienna)
+                                    newscore = - v_score_single(p,q,i,j, nucp, nucp1, nucq_1, nucq,
+                                                   nuci_1, nuci, nucj, nucj1)
+                                        + state.score;
+                                else
+                                    newscore = score_junction_B(p, q, nucp, nucp1, nucq_1, nucq) +
+                                        precomputed +
+                                        score_single_without_junctionB(p, q, i, j,
+                                                                       nuci_1, nuci, nucj, nucj1) +
+                                        state.score;
                                 update_if_better(bestP[q][p], newscore, MANNER_SINGLE,
                                                  static_cast<char>(i - p),
                                                  static_cast<char>(q - j));
@@ -404,7 +489,11 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
 
                 // 2. M = P
                 if(i > 0 && j < seq_length-1){
-                    double newscore = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                    double newscore;
+                    if (use_vienna)
+                        newscore = - v_score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                    else
+                        newscore = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
                     update_if_better(beamstepM[i], newscore, MANNER_M_eq_P);
                     ++ nos_M;
                 }
@@ -414,7 +503,11 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                 if(!use_cube_pruning) {
                     int k = i - 1;
                     if ( k > 0 && !bestM[k].empty()) {
-                        double M1_score = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                        double M1_score;
+                        if (use_vienna)
+                            M1_score = - score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                        else
+                            M1_score = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
                         // candidate list
                         auto bestM2_iter = beamstepM2.find(i);
                         if ((!is_candidate_list) || bestM2_iter==beamstepM2.end() || M1_score > bestM2_iter->second.score) {
@@ -440,16 +533,28 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                       if (prefix_C.manner != MANNER_NONE) {
                         int nuck = nuci_1;
                         int nuck1 = nuci;
-                        double newscore = score_external_paired(k+1, j, nuck, nuck1,
-                                                                nucj, nucj1, seq_length) +
-                          prefix_C.score + state.score;
+                        double newscore;
+                        if (use_vienna)
+                            newscore = - v_score_external_paired(k+1, j, nuck, nuck1,
+                                                                 nucj, nucj1, seq_length) +
+                                prefix_C.score + state.score;
+                        else
+                            newscore = score_external_paired(k+1, j, nuck, nuck1,
+                                                             nucj, nucj1, seq_length) +
+                                prefix_C.score + state.score;
                         update_if_better(beamstepC, newscore, MANNER_C_eq_C_plus_P, k);
                         ++ nos_C;
                       }
                     } else {
-                        double newscore = score_external_paired(0, j, -1, nucs[0],
-                                                                nucj, nucj1, seq_length) +
-                                          state.score;
+                        double newscore;
+                        if (use_vienna)
+                            newscore = - v_score_external_paired(0, j, -1, nucs[0],
+                                                                 nucj, nucj1, seq_length) +
+                                state.score;
+                        else
+                            newscore = score_external_paired(0, j, -1, nucs[0],
+                                                             nucj, nucj1, seq_length) +
+                                state.score;
                         update_if_better(beamstepC, newscore, MANNER_C_eq_C_plus_P, -1);
                         ++ nos_C;
                     }
@@ -471,7 +576,11 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                     // group candidate Ps
                     if (k > 0 && !bestM[k].empty()) {
                         assert(bestM[k].size() == sorted_bestM[k].size());
-                        double M1_score = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                        double M1_score;
+                        if (use_vienna)
+                            M1_score = - v_score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                        else
+                            M1_score = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
                         auto bestM2_iter = beamstepM2.find(i);
                         if ((!is_candidate_list) || bestM2_iter == beamstepM2.end()
                             || M1_score > bestM2_iter->second.score) {
@@ -564,8 +673,13 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                         if (q != -1 && ((i - p) + (q - j) <= SINGLE_MAX_LEN)) {
                             // the current shape is p..i M2 j ..q
 
-                            double newscore = score_multi_unpaired(p+1, i-1) +
-                                              score_multi_unpaired(j+1, q-1) + state.score;
+                            double newscore;
+                            if (use_vienna)
+                                newscore = - v_score_multi_unpaired(p+1, i-1) -
+                                    v_score_multi_unpaired(j+1, q-1) + state.score;
+                            else
+                                newscore = score_multi_unpaired(p+1, i-1) +
+                                    score_multi_unpaired(j+1, q-1) + state.score;
 
                             update_if_better(bestMulti[q][p], newscore, MANNER_MULTI,
                                              static_cast<char>(i - p),
@@ -601,7 +715,11 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                 int i = item.first;
                 State& state = item.second;
                 if (j < seq_length-1) {
-                    double newscore = score_multi_unpaired(j + 1, j + 1) + state.score;
+                    double newscore;
+                    if (use_vienna)
+                        newscore = - v_score_multi_unpaired(j + 1, j + 1) + state.score;
+                    else
+                        newscore = score_multi_unpaired(j + 1, j + 1) + state.score;
                     update_if_better(bestM[j+1][i], newscore, MANNER_M_eq_M_plus_U);
                     ++ nos_M;
                 }
@@ -613,7 +731,11 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
         {
             // C = C + U
             if (j < seq_length-1) {
-                double newscore = score_external_unpaired(j+1, j+1) + beamstepC.score;
+                double newscore;
+                if (use_vienna)
+                    newscore = -v_score_external_unpaired(j+1, j+1) + beamstepC.score;
+                else
+                    newscore = score_external_unpaired(j+1, j+1) + beamstepC.score;
                 update_if_better(bestC[j+1], newscore, MANNER_C_eq_C_plus_U);
                 ++ nos_C;
             }
@@ -641,15 +763,19 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
     return {string(result), viterbi.score, nos_tot, elapsed_time};
 }
 
-
 BeamCKYParser::BeamCKYParser(int beam_size,
+                             bool vienna,
                              bool candidate_list,
                              bool nosharpturn,
                              bool cube_pruning)
-        : beam(beam_size), is_candidate_list(candidate_list),
+    : beam(beam_size), use_vienna(vienna), is_candidate_list(candidate_list),
           no_sharp_turn(nosharpturn), is_cube_pruning(cube_pruning) {
-    initialize();
-    initialize_cachesingle();
+    if (use_vienna)
+        v_initialize();
+    else {
+        initialize();
+        initialize_cachesingle();
+    }
 }
 
 
@@ -658,6 +784,7 @@ BeamCKYParser::BeamCKYParser(int beam_size,
 int main(int argc, char** argv){
 
     int beamsize = 0;
+    bool use_vienna = false;
     bool is_cube_pruning = true;
     bool is_candidate_list = true;
     bool sharpturn = false;
@@ -669,6 +796,8 @@ int main(int argc, char** argv){
         options.add_options()
                 ("b,beam", "beam size", cxxopts::value<int>()->default_value("0"))
                 ("f,file", "input file", cxxopts::value<string>())
+                ("v,vienna", "use vienna parameters (default false)",
+                 cxxopts::value<bool>())
                 ("no_cp", "disable cube pruning (default false)",
                  cxxopts::value<bool>())
                 ("no_cl", "disable candidate list (default true)",
@@ -679,6 +808,7 @@ int main(int argc, char** argv){
         options.parse(argc, argv);
 
         beamsize = options["b"].as<int>();
+        use_vienna = options["vienna"].as<bool>();
         is_candidate_list = !options["no_cl"].as<bool>();
         is_cube_pruning = !options["no_cp"].as<bool>();
         sharpturn = options["sharpturn"].as<bool>();
@@ -698,14 +828,12 @@ int main(int argc, char** argv){
     double total_score = .0;
     double total_time = .0;
 
-    printf("Running configuration: beam size %d candidate list %d sharpturn %d cube pruning %d file %s\n",
-           beamsize, is_candidate_list, sharpturn, is_cube_pruning,
+    printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d; file %s\n",
+           beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning,
            seq_file_name.c_str()
     ); fflush(stdout);
 
-    if(beamsize > 0) beamsize += 4; // reservebeam
-
-    BeamCKYParser parser(beamsize, is_candidate_list, !sharpturn, is_cube_pruning);
+    BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning);
 
     // go through the seq file to decode each seq
     for (string seq; getline(f_seq, seq);) {

@@ -6,7 +6,6 @@
  edited by: 02/2018
 */
 
-
 #ifndef FASTCKY_UTILITY_H
 #define FASTCKY_UTILITY_H
 
@@ -35,11 +34,9 @@
 #define GET_ACGU_NUM(x) ((x=='A'? 0 : (x=='C'? 1 : (x=='G'? 2 : (x=='U'?3: 4)))))
 #define HELIX_STACKING_OLD(x, y, z, w) (_helix_stacking[GET_ACGU_NUM(x)][GET_ACGU_NUM(y)][GET_ACGU_NUM(z)][GET_ACGU_NUM(w)])
 
-
 bool _allowed_pairs[NOTON][NOTON];
 bool _helix_stacking[NOTON][NOTON][NOTON][NOTON];
 double cache_single[SINGLE_MAX_LEN+1][SINGLE_MAX_LEN+1];
-
 
 void initialize_cachesingle()
 {

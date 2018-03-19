@@ -71,6 +71,7 @@ class BeamCKYParser {
 public:
     int beam;
 
+    bool use_vienna;
     bool is_candidate_list;
     bool is_cube_pruning;
     bool no_sharp_turn;
@@ -83,6 +84,7 @@ public:
     };
 
     BeamCKYParser(int beam_size=0,
+                  bool vienna=false,
                   bool candidate_list=true,
                   bool nosharpturn=true,
                   bool cube_pruning=true);
