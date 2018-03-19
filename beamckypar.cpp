@@ -252,8 +252,8 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
 
     // start CKY decoding
     if (use_vienna) {
-        if(seq_length > 0) bestC[0].set(v_score_external_unpaired(0, 0), MANNER_C_eq_C_plus_U);
-        if(seq_length > 1) bestC[1].set(v_score_external_unpaired(0, 1), MANNER_C_eq_C_plus_U);
+        if(seq_length > 0) bestC[0].set(- v_score_external_unpaired(0, 0), MANNER_C_eq_C_plus_U);
+        if(seq_length > 1) bestC[1].set(- v_score_external_unpaired(0, 1), MANNER_C_eq_C_plus_U);
     }
     else {
         if(seq_length > 0) bestC[0].set(score_external_unpaired(0, 0), MANNER_C_eq_C_plus_U);
@@ -505,7 +505,7 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                     if ( k > 0 && !bestM[k].empty()) {
                         double M1_score;
                         if (use_vienna)
-                            M1_score = - score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
+                            M1_score = - v_score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
                         else
                             M1_score = score_M1(i, j, j, nuci_1, nuci, nucj, nucj1, seq_length) + state.score;
                         // candidate list
@@ -752,7 +752,10 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
     gettimeofday(&endtime, NULL);
     double elapsed_time = endtime.tv_sec - starttime.tv_sec + (endtime.tv_usec-starttime.tv_usec)/1000000.0;
 
-    printf("Viterbi score: %f\n", viterbi.score);
+    if (use_vienna)
+        printf("Energy(kcal/mol): %.2f\n", viterbi.score / -100.0);
+    else
+        printf("Viterbi score: %f\n", viterbi.score);
     unsigned long nos_tot = nos_H + nos_P + nos_M2 + nos_Multi + nos_M + nos_C;
     printf("Time: %f len: %d score %f #states %lu H %lu P %lu M2 %lu Multi %lu M %lu C %lu\n",
            elapsed_time, seq_length, viterbi.score, nos_tot,
@@ -771,7 +774,7 @@ BeamCKYParser::BeamCKYParser(int beam_size,
     : beam(beam_size), use_vienna(vienna), is_candidate_list(candidate_list),
           no_sharp_turn(nosharpturn), is_cube_pruning(cube_pruning) {
     if (use_vienna)
-        v_initialize();
+        initialize();
     else {
         initialize();
         initialize_cachesingle();

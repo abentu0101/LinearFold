@@ -60,8 +60,8 @@ struct State {
         score = score_; manner = manner_; trace.split = split_;
     }
 
-    void set(double socore_, Manner manner_, char l1_, char l2_) {
-        score = socore_; manner = manner_;
+    void set(double score_, Manner manner_, char l1_, char l2_) {
+        score = score_; manner = manner_;
         trace.paddings.l1 = l1_; trace.paddings.l2 = l2_;
     }
 };

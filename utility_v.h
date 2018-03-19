@@ -28,18 +28,16 @@
 inline int MIN2(int a, int b) {if (a <= b)return a;else return b;}
 inline int MAX2(int a, int b) {if (a >= b)return a;else return b;}
 
-// TODO
+/* void v_initialize() */
+/* { */
+/*     _allowed_pairs[GET_ACGU_NUM('A')][GET_ACGU_NUM('U')] = true; */
+/*     _allowed_pairs[GET_ACGU_NUM('U')][GET_ACGU_NUM('A')] = true; */
+/*     _allowed_pairs[GET_ACGU_NUM('C')][GET_ACGU_NUM('G')] = true; */
+/*     _allowed_pairs[GET_ACGU_NUM('G')][GET_ACGU_NUM('C')] = true; */
+/*     _allowed_pairs[GET_ACGU_NUM('G')][GET_ACGU_NUM('U')] = true; */
+/*     _allowed_pairs[GET_ACGU_NUM('U')][GET_ACGU_NUM('G')] = true; */
 
-void v_initialize()
-{
-    _allowed_pairs[GET_ACGU_NUM('A')][GET_ACGU_NUM('U')] = true;
-    _allowed_pairs[GET_ACGU_NUM('U')][GET_ACGU_NUM('A')] = true;
-    _allowed_pairs[GET_ACGU_NUM('C')][GET_ACGU_NUM('G')] = true;
-    _allowed_pairs[GET_ACGU_NUM('G')][GET_ACGU_NUM('C')] = true;
-    _allowed_pairs[GET_ACGU_NUM('G')][GET_ACGU_NUM('U')] = true;
-    _allowed_pairs[GET_ACGU_NUM('U')][GET_ACGU_NUM('G')] = true;
-
-}
+/* } */
 
 inline void v_init_tetra_hex_tri(std::string& seq, int seq_length, std::vector<int>& if_tetraloops, std::vector<int>& if_hexaloops, std::vector<int>& if_triloops) {
 
