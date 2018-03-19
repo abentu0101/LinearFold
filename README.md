@@ -31,10 +31,11 @@ Note that there are two external libraries stated in ```CMakeLists.txt``` file:
 #### To Run
 The LinearFold parser can be run with:
 ```
-linearfold -f sequence_file [-b beam_size]
+linearfold -f sequence_file [-b beam_size] [-v]
 ```
 
-The default beam_size is infinite.
+1. -v switches LinearFold-C (by default) to LinearFold-V. 
+2. The default beam_size is infinite.
 
 For example:
 #### Example Run
