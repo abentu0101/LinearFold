@@ -43,7 +43,7 @@ cat SEQ_FILE | linearfold [-b beam_size] [-v]
 
 1. -v switches LinearFold-C (by default) to LinearFold-V. 
 2. The default beam_size is 100; use 0 for infinite beam. 
-3. For SEQ_FILE, it supports both pure sequence file format and FASTA format. 
+3. Both FASTA format and pure sequence format are supported. 
 
 For example:
 #### Example Run
