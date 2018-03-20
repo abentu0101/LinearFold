@@ -797,8 +797,8 @@ int main(int argc, char** argv){
 
     try {
         options.add_options()
-                ("b,beam", "beam size", cxxopts::value<int>()->default_value("0"))
-                ("f,file", "input file", cxxopts::value<string>())
+                ("b,beam", "beam size (default 100)", cxxopts::value<int>()->default_value("100"))
+                // ("f,file", "input file", cxxopts::value<string>())
                 ("v,vienna", "use vienna parameters (default false)",
                  cxxopts::value<bool>())
                 ("no_cp", "disable cube pruning (default false)",
@@ -815,7 +815,7 @@ int main(int argc, char** argv){
         is_candidate_list = !options["no_cl"].as<bool>();
         is_cube_pruning = !options["no_cp"].as<bool>();
         sharpturn = options["sharpturn"].as<bool>();
-        seq_file_name = options["f"].as<string>();
+        // seq_file_name = options["f"].as<string>();
 
     } catch (const cxxopts::OptionException& e) {
         cout << "error parsing options: " << e.what() << endl;
@@ -823,7 +823,7 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    ifstream f_seq(seq_file_name);
+    // ifstream f_seq(seq_file_name);
 
     // variables for decoding
     int num=0, total_len = 0;
@@ -831,15 +831,16 @@ int main(int argc, char** argv){
     double total_score = .0;
     double total_time = .0;
 
-    printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d; file %s\n",
-           beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning,
-           seq_file_name.c_str()
+    printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d;\n",
+           beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning
+           //seq_file_name.c_str()
     ); fflush(stdout);
 
     BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning);
 
     // go through the seq file to decode each seq
-    for (string seq; getline(f_seq, seq);) {
+    //for (string seq; getline(f_seq, seq);) {
+    for (string seq; getline(cin, seq);) {
         printf("seq:\n%s\n", seq.c_str()); // passed
 
         BeamCKYParser::DecoderResult result = parser.parse(seq);
@@ -853,7 +854,7 @@ int main(int argc, char** argv){
         total_time += result.time;
     }
 
-    f_seq.close();
+    // f_seq.close();
 
     double dnum = (double)num;
     printf("num_seq: %d; avg_len: %.1f ", num, total_len/dnum);
