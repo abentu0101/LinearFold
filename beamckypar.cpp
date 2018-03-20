@@ -841,6 +841,12 @@ int main(int argc, char** argv){
     // go through the seq file to decode each seq
     //for (string seq; getline(f_seq, seq);) {
     for (string seq; getline(cin, seq);) {
+        if (seq.length() > 0 && (seq[0] == ';' || seq[0] == '>')) {
+            printf("%s\n", seq.c_str());
+            continue;
+        }
+
+
         printf("seq:\n%s\n", seq.c_str()); // passed
 
         BeamCKYParser::DecoderResult result = parser.parse(seq);
