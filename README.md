@@ -39,7 +39,7 @@ echo "SEQUENCE" | linearfold [-b beam_size] [-v]
 
 OR
 
-cat SEQ_FILE | linearfold [-b beam_size] [-v]
+cat SEQ_OR_FASTA_FILE | linearfold [-b beam_size] [-v]
 ```
 
 1. -v switches LinearFold-C (by default) to LinearFold-V. 
