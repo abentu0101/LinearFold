@@ -799,7 +799,7 @@ int main(int argc, char** argv){
         options.add_options()
                 ("b,beam", "beam size (default 100)", cxxopts::value<int>()->default_value("100"))
                 // ("f,file", "input file", cxxopts::value<string>())
-                ("v,vienna", "use vienna parameters (default false)",
+                ("V,Vienna", "use Vienna parameters (default false)",
                  cxxopts::value<bool>())
                 ("no_cp", "disable cube pruning (default false)",
                  cxxopts::value<bool>())
@@ -811,7 +811,7 @@ int main(int argc, char** argv){
         options.parse(argc, argv);
 
         beamsize = options["b"].as<int>();
-        use_vienna = options["vienna"].as<bool>();
+        use_vienna = options["Vienna"].as<bool>();
         is_candidate_list = !options["no_cl"].as<bool>();
         is_cube_pruning = !options["no_cp"].as<bool>();
         sharpturn = options["sharpturn"].as<bool>();

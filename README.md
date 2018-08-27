@@ -35,14 +35,14 @@ A minimum gcc version of 4.9.0 is required.
 #### To Run
 The LinearFold parser can be run with:
 ```
-echo "SEQUENCE" | linearfold [-b beam_size] [-v]
+echo "SEQUENCE" | linearfold [-b beam_size] [-V]
 
 OR
 
-cat SEQ_OR_FASTA_FILE | linearfold [-b beam_size] [-v]
+cat SEQ_OR_FASTA_FILE | linearfold [-b beam_size] [-V]
 ```
 
-1. -v switches LinearFold-C (by default) to LinearFold-V. 
+1. -V (--Vienna) switches LinearFold-C (by default) to LinearFold-V. 
 2. The default beam_size is 100; use 0 for infinite beam. 
 3. Both FASTA format and pure-sequence format are supported. 
 
