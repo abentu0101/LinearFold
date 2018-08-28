@@ -75,6 +75,7 @@ public:
     bool is_candidate_list;
     bool is_cube_pruning;
     bool no_sharp_turn;
+    bool is_verbose;
 
     struct DecoderResult {
         std::string structure;
@@ -87,16 +88,21 @@ public:
                   bool vienna=false,
                   bool candidate_list=true,
                   bool nosharpturn=true,
-                  bool cube_pruning=true);
+                  bool cube_pruning=true,
+                  bool is_verbose=false);
 
     DecoderResult parse(std::string& seq);
 
 private:
-    void get_parentheses(char* result);
+    void get_parentheses(char* result, std::string& seq);
 
     unsigned seq_length;
 
     std::vector<std::unordered_map<int, State>> bestH, bestP, bestM2, bestMulti, bestM;
+
+    std::vector<int> if_tetraloops;
+    std::vector<int> if_hexaloops;
+    std::vector<int> if_triloops;
 
     // same as bestM, but ordered
     std::vector<std::vector<std::pair<double, int>>> sorted_bestM;

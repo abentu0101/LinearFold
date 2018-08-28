@@ -25,14 +25,23 @@
 
 using namespace std;
 
-void BeamCKYParser::get_parentheses(char* result) {
+void BeamCKYParser::get_parentheses(char* result, string& seq) {
     memset(result, '.', seq_length);
     result[seq_length] = 0;
 
-
     stack<tuple<int, int, State>> stk;
-
     stk.push(make_tuple(0, seq_length-1, bestC[seq_length-1]));
+
+    if(is_verbose){
+            printf(">verbose\n");
+            if (!use_vienna)
+                v_init_tetra_hex_tri(seq, seq_length, if_tetraloops, if_hexaloops, if_triloops);
+        }
+    // verbose stuff
+    vector<pair<int,int>> multi_todo;
+    unordered_map<int,int> mbp; // multi bp
+    double total_energy = .0;
+    double external_energy = .0;
 
     while ( !stk.empty() ) {
         tuple<int, int, State> top = stk.top();
@@ -49,20 +58,62 @@ void BeamCKYParser::get_parentheses(char* result) {
                 // this state should not be traced
                 break;
             case MANNER_HAIRPIN:
-                result[i] = '(';
-                result[j] = ')';
+                {
+                    result[i] = '(';
+                    result[j] = ')';
+                    if(is_verbose) {
+                        int tetra_hex_tri = -1;
+                        if (j-i-1 == 4) // 6:tetra
+                            tetra_hex_tri = if_tetraloops[i];
+                        else if (j-i-1 == 6) // 8:hexa
+                            tetra_hex_tri = if_hexaloops[i];
+                        else if (j-i-1 == 3) // 5:tri
+                            tetra_hex_tri = if_triloops[i];
+                        int nuci = nucs[i], nucj = nucs[j];
+                        int nuci1 = (i + 1) < seq_length ? nucs[i + 1] : -1;
+                        int nucj_1 = (j - 1) > -1 ? nucs[j - 1] : -1;
+
+                        double newscore = - v_score_hairpin(i, j, nuci, nuci1, nucj_1, nucj, tetra_hex_tri);
+                        printf("Hairpin loop ( %d, %d) %c%c : %.2f\n", i+1, j+1, seq[i], seq[j], newscore / -100.0);
+                        total_energy += newscore;
+                    }
+                }
                 break;
             case MANNER_SINGLE:
-                result[i] = '(';
-                result[j] = ')';
-                p = i + state.trace.paddings.l1;
-                q = j - state.trace.paddings.l2;
-                stk.push(make_tuple(p, q, bestP[q][p]));
+                {
+                    result[i] = '(';
+                    result[j] = ')';
+                    p = i + state.trace.paddings.l1;
+                    q = j - state.trace.paddings.l2;
+                    stk.push(make_tuple(p, q, bestP[q][p]));
+                    if(is_verbose) {
+                        int nuci = nucs[i], nuci1 = nucs[i+1], nucj_1 = nucs[j-1], nucj = nucs[j];
+                        int nucp_1 = nucs[p-1], nucp = nucs[p], nucq = nucs[q], nucq1 = nucs[q+1];
+
+                        double newscore = -v_score_single(i,j,p,q, nuci, nuci1, nucj_1, nucj,
+                                                          nucp_1, nucp, nucq, nucq1);
+                        printf("Interior loop ( %d, %d) %c%c; ( %d, %d) %c%c : %.2f\n", i+1, j+1, seq[i], seq[j], p+1, q+1, seq[p],seq[q], newscore / -100.0);
+                        total_energy += newscore;
+                    }
+                }
                 break;
             case MANNER_HELIX:
-                result[i] = '(';
-                result[j] = ')';
-                stk.push(make_tuple(i+1, j-1, bestP[j-1][i+1]));
+                {
+                    result[i] = '(';
+                    result[j] = ')';
+                    stk.push(make_tuple(i+1, j-1, bestP[j-1][i+1]));
+                    if(is_verbose){
+                        p = i + 1;
+                        q = j - 1;
+                        int nuci = nucs[i], nuci1 = nucs[i+1], nucj_1 = nucs[j-1], nucj = nucs[j];
+                        int nucp_1 = nucs[p-1], nucp = nucs[p], nucq = nucs[q], nucq1 = nucs[q+1];
+
+                        double newscore = -v_score_single(i,j,p,q, nuci, nuci1, nucj_1, nucj,
+                                                          nucp_1, nucp, nucq, nucq1);
+                        printf("Interior loop ( %d, %d) %c%c; ( %d, %d) %c%c : %.2f\n", i+1, j+1, seq[i], seq[j], p+1, q+1, seq[p],seq[q], newscore / -100.0);
+                        total_energy += newscore;
+                    }
+                }
                 break;
             case MANNER_MULTI:
                 p = i + state.trace.paddings.l1;
@@ -73,11 +124,16 @@ void BeamCKYParser::get_parentheses(char* result) {
                 result[i] = '(';
                 result[j] = ')';
                 stk.push(make_tuple(i, j, bestMulti[j][i]));
+                if(is_verbose) {
+                    multi_todo.push_back(make_pair(i,j));
+                }
                 break;
             case MANNER_M2_eq_M_plus_P:
                 k = state.trace.split;
                 stk.push(make_tuple(i, k, bestM[k][i]));
                 stk.push(make_tuple(k+1, j, bestP[j][k+1]));
+                if(is_verbose)
+                    mbp[k+1] = j;
                 break;
             case MANNER_M_eq_M2:
                 stk.push(make_tuple(i, j, bestM2[j][i]));
@@ -87,6 +143,8 @@ void BeamCKYParser::get_parentheses(char* result) {
                 break;
             case MANNER_M_eq_P:
                 stk.push(make_tuple(i, j, bestP[j][i]));
+                if(is_verbose)
+                    mbp[i] = j;
                 break;
             // case MANNER_C_eq_U:
             //     // i=0,  skip from i to j
@@ -98,20 +156,63 @@ void BeamCKYParser::get_parentheses(char* result) {
                 k = j - 1;
                 if (k != -1)
                     stk.push(make_tuple(0, k, bestC[k]));
+                if (is_verbose) 
+                    external_energy += - v_score_external_unpaired(0, 0); // zero at this moment
                 break;
             case MANNER_C_eq_C_plus_P:
-                k = state.trace.split;
-                if (k != -1) {
-                    stk.push(make_tuple(0, k, bestC[k]));
-                    stk.push(make_tuple(k+1, j, bestP[j][k+1]));
-                }
-                else {
-                  stk.push(make_tuple(i, j, bestP[j][i]));
+                {
+                    k = state.trace.split;
+                    if (k != -1) {
+                        stk.push(make_tuple(0, k, bestC[k]));
+                        stk.push(make_tuple(k+1, j, bestP[j][k+1]));
+                    }
+                    else {
+                        stk.push(make_tuple(i, j, bestP[j][i]));
+                    }
+                    if (is_verbose) {
+                        int nuck = k > -1 ? nucs[k] : -1;
+                        int nuck1 = nucs[k+1], nucj = nucs[j];
+                        int nucj1 = (j + 1) < seq_length ? nucs[j + 1] : -1;
+                        external_energy +=  - v_score_external_paired(k+1, j, nuck, nuck1,
+                                                                    nucj, nucj1, seq_length);
+                    }
                 }
                 break;
             default:  // MANNER_NONE or other cases
                 printf("wrong manner at %d, %d: manner %d\n", i, j, state.manner); fflush(stdout);
                 assert(false);
+        }
+    }
+
+    if(is_verbose) {
+        for (auto item : multi_todo) {
+            int i = item.first;
+            int j = item.second;
+            int nuci = nucs[i], nuci1 = nucs[i+1], nucj_1 = nucs[j-1], nucj = nucs[j];
+            double multi_energy = - v_score_multi(i, j, nuci, nuci1, nucj_1, nucj, seq_length);
+            int num_unpaired = 0;
+            for (int k=i+1; k<j; ++k) {
+                if (result[k] == '.')
+                    num_unpaired += 1;
+                else if (result[k] == '(') {
+                    int p = k, q = mbp[k];
+                    int nucp_1 = nucs[p-1], nucp = nucs[p], nucq = nucs[q], nucq1 = nucs[q+1];
+
+                    multi_energy += - v_score_M1(p, q, q, nucp_1, nucp, nucq, nucq1, seq_length);
+                    k = q;
+                }
+            }
+            multi_energy += - v_score_multi_unpaired(1, num_unpaired);
+
+            printf("Multi loop ( %d, %d) %c%c : %.2f\n", i+1, j+1, seq[i], seq[j], multi_energy / -100.0);
+            total_energy += multi_energy;
+        }
+
+        printf("External loop : %.2f\n", external_energy / -100.0);
+        total_energy += external_energy;
+
+        if(!use_vienna) {
+            printf("Energy(kcal/mol): %.2f\n", total_energy / -100.0);
         }
     }
 
@@ -160,8 +261,6 @@ double BeamCKYParser::beam_prune(std::unordered_map<int, State> &beamstep) {
 
     return threshold;
 }
-
-
 
 void BeamCKYParser::sortM(double threshold,
                           std::unordered_map<int, State> &beamstep,
@@ -239,10 +338,6 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
             }
         }
     }
-
-    vector<int> if_tetraloops;
-    vector<int> if_hexaloops;
-    vector<int> if_triloops;
 
 #ifdef SPECIAL_HP
     //if(special_hp)
@@ -747,7 +842,7 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
     State& viterbi = bestC[seq_length-1];
 
     char result[seq_length+1];
-    get_parentheses(result);
+    get_parentheses(result, seq);
 
     gettimeofday(&endtime, NULL);
     double elapsed_time = endtime.tv_sec - starttime.tv_sec + (endtime.tv_usec-starttime.tv_usec)/1000000.0;
@@ -770,9 +865,11 @@ BeamCKYParser::BeamCKYParser(int beam_size,
                              bool vienna,
                              bool candidate_list,
                              bool nosharpturn,
-                             bool cube_pruning)
+                             bool cube_pruning,
+                             bool verbose)
     : beam(beam_size), use_vienna(vienna), is_candidate_list(candidate_list),
-          no_sharp_turn(nosharpturn), is_cube_pruning(cube_pruning) {
+      no_sharp_turn(nosharpturn), is_cube_pruning(cube_pruning),
+      is_verbose(verbose) {
     if (use_vienna)
         initialize();
     else {
@@ -791,6 +888,7 @@ int main(int argc, char** argv){
     bool is_cube_pruning = true;
     bool is_candidate_list = true;
     bool sharpturn = false;
+    bool is_verbose = false;
     string seq_file_name;
 
     cxxopts::Options options(argv[0], "Left-to-right CKY parser with beam");
@@ -806,7 +904,11 @@ int main(int argc, char** argv){
                 ("no_cl", "disable candidate list (default true)",
                  cxxopts::value<bool>())
                 ("sharpturn", "enable sharp turn in prediction (default false)",
-                 cxxopts::value<bool>());
+                 cxxopts::value<bool>())
+                ("v,verbose", "print out energy of each loop in the structure (default false)",
+                 cxxopts::value<bool>())
+
+            ;
 
         options.parse(argc, argv);
 
@@ -815,6 +917,7 @@ int main(int argc, char** argv){
         is_candidate_list = !options["no_cl"].as<bool>();
         is_cube_pruning = !options["no_cp"].as<bool>();
         sharpturn = options["sharpturn"].as<bool>();
+        is_verbose = options["verbose"].as<bool>();
         // seq_file_name = options["f"].as<string>();
 
     } catch (const cxxopts::OptionException& e) {
@@ -831,12 +934,12 @@ int main(int argc, char** argv){
     double total_score = .0;
     double total_time = .0;
 
-    printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d;\n",
-           beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning
+    printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d verbose %d;\n",
+           beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning, is_verbose
            //seq_file_name.c_str()
     ); fflush(stdout);
 
-    BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning);
+    BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning, is_verbose);
 
     // go through the seq file to decode each seq
     //for (string seq; getline(f_seq, seq);) {
