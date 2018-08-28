@@ -43,7 +43,7 @@ cat SEQ_OR_FASTA_FILE | linearfold [-b beam_size] [-V / --Vienna] [-v --verbose]
 ```
 
 1. -V (--Vienna) switches LinearFold-C (by default) to LinearFold-V. 
-2. -v (--verbose) prints print out energy of each loop in the structure. (newly added!)
+2. -v (--verbose) prints print out energy of each loop in the structure.
 3. The default beam_size is 100; use 0 for infinite beam. 
 4. Both FASTA format and pure-sequence format are supported. 
 
@@ -51,4 +51,6 @@ For example:
 #### Example Run
 ```
 cat ../testseq | ./linearfold 
+
+echo "GGGCUCGUAGAUCAGCGGUAGAUCGCUUCCUUCGCAAGGAAGAGGCCCUGGGUUCAAAUCCCAGCGAGUCCACCA" | ./linearfold -b 20 -Vv
 ```
