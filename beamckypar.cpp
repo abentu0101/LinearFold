@@ -883,7 +883,7 @@ int main(int argc, char** argv){
     bool is_candidate_list = true;
     bool sharpturn = false;
     bool is_verbose = false;
-    bool regularprint = true;
+    bool regularprint = false;
     string seq_file_name;
 
     cxxopts::Options options(argv[0], "Left-to-right CKY parser with beam");
@@ -902,7 +902,7 @@ int main(int argc, char** argv){
                  cxxopts::value<bool>())
                 ("v,verbose", "print out energy of each loop in the structure (default false)",
                  cxxopts::value<bool>())
-                ("s,simpleprint", "print out sequence and structure only (default false)",
+                ("m,multiline", "output in the CONTRAfold multiline format (default false)",
                  cxxopts::value<bool>())
             ;
 
@@ -914,7 +914,7 @@ int main(int argc, char** argv){
         is_cube_pruning = !options["no_cp"].as<bool>();
         sharpturn = options["sharpturn"].as<bool>();
         is_verbose = options["verbose"].as<bool>();
-        regularprint = !options["simpleprint"].as<bool>();
+        regularprint = options["multiline"].as<bool>();
         // seq_file_name = options["f"].as<string>();
 
     } catch (const cxxopts::OptionException& e) {
@@ -968,7 +968,7 @@ int main(int argc, char** argv){
                 printf("Energy(kcal/mol): %.2f\n", result.score / -100.0);
             else
                 printf("Viterbi score: %f\n", result.score);
-            printf("Time: %f len: %d score %f",
+            printf("Time: %f len: %d score %f\n",
                    result.time, int(seq.length()), result.score );
 
             printf(">structure\n%s\n\n", result.structure.c_str());

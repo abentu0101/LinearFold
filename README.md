@@ -56,18 +56,16 @@ Switches LinearFold-C (by default) to LinearFold-V.
 
 > -v --verbose
 
-Prints out energy of each loop in the structure . (default False)
+Prints out energy of each loop in the structure. (default False)
 
-> -s --simpleprint
+> -m --multiline
 
-The simplest output (two lines: sequence and structure) only. Can be used for pipe. (default False)
+Output in the CONTRAfold multiline format. (default False)
 
 For example:
 #### Example Run
 ```
 cat ../testseq | ./linearfold 
 
-echo "GGGCUCGUAGAUCAGCGGUAGAUCGCUUCCUUCGCAAGGAAGAGGCCCUGGGUUCAAAUCCCAGCGAGUCCACCA" | ./linearfold -b 20 -Vv
-
-echo "GGGCUCGUAGAUCAGCGGUAGAUCGCUUCCUUCGCAAGGAAGAGGCCCUGGGUUCAAAUCCCAGCGAGUCCACCA" | ./linearfold -s
+echo "GGGCUCGUAGAUCAGCGGUAGAUCGCUUCCUUCGCAAGGAAGAGGCCCUGGGUUCAAAUCCCAGCGAGUCCACCA" | ./linearfold -b 20 -Vvm
 ```
