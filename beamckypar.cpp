@@ -34,9 +34,7 @@ void BeamCKYParser::get_parentheses(char* result, string& seq) {
 
     if(is_verbose){
             printf(">verbose\n");
-            if (!use_vienna)
-                v_init_tetra_hex_tri(seq, seq_length, if_tetraloops, if_hexaloops, if_triloops);
-        }
+    }
     // verbose stuff
     vector<pair<int,int>> multi_todo;
     unordered_map<int,int> mbp; // multi bp
@@ -341,7 +339,7 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
 
 #ifdef SPECIAL_HP
     //if(special_hp)
-    if (use_vienna)
+    if (use_vienna || is_verbose)
         v_init_tetra_hex_tri(seq, seq_length, if_tetraloops, if_hexaloops, if_triloops);
 #endif
 
