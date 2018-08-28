@@ -845,14 +845,10 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
     gettimeofday(&endtime, NULL);
     double elapsed_time = endtime.tv_sec - starttime.tv_sec + (endtime.tv_usec-starttime.tv_usec)/1000000.0;
 
-    if (use_vienna)
-        printf("Energy(kcal/mol): %.2f\n", viterbi.score / -100.0);
-    else
-        printf("Viterbi score: %f\n", viterbi.score);
     unsigned long nos_tot = nos_H + nos_P + nos_M2 + nos_Multi + nos_M + nos_C;
-    printf("Time: %f len: %d score %f #states %lu H %lu P %lu M2 %lu Multi %lu M %lu C %lu\n",
-           elapsed_time, seq_length, viterbi.score, nos_tot,
-           nos_H, nos_P, nos_M2, nos_Multi, nos_M, nos_C);
+    // printf("Time: %f len: %d score %f #states %lu H %lu P %lu M2 %lu Multi %lu M %lu C %lu\n",
+    //        elapsed_time, seq_length, viterbi.score, nos_tot,
+    //        nos_H, nos_P, nos_M2, nos_Multi, nos_M, nos_C);
 
     fflush(stdout);
 
@@ -887,6 +883,7 @@ int main(int argc, char** argv){
     bool is_candidate_list = true;
     bool sharpturn = false;
     bool is_verbose = false;
+    bool regularprint = true;
     string seq_file_name;
 
     cxxopts::Options options(argv[0], "Left-to-right CKY parser with beam");
@@ -905,7 +902,8 @@ int main(int argc, char** argv){
                  cxxopts::value<bool>())
                 ("v,verbose", "print out energy of each loop in the structure (default false)",
                  cxxopts::value<bool>())
-
+                ("s,simpleprint", "print out sequence and structure only (default false)",
+                 cxxopts::value<bool>())
             ;
 
         options.parse(argc, argv);
@@ -916,6 +914,7 @@ int main(int argc, char** argv){
         is_cube_pruning = !options["no_cp"].as<bool>();
         sharpturn = options["sharpturn"].as<bool>();
         is_verbose = options["verbose"].as<bool>();
+        regularprint = !options["simpleprint"].as<bool>();
         // seq_file_name = options["f"].as<string>();
 
     } catch (const cxxopts::OptionException& e) {
@@ -932,10 +931,12 @@ int main(int argc, char** argv){
     double total_score = .0;
     double total_time = .0;
 
-    printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d verbose %d;\n",
-           beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning, is_verbose
-           //seq_file_name.c_str()
-    ); fflush(stdout);
+    if(regularprint) {
+        printf("Running configuration: beam size %d; use_vienna: %d; candidate list %d; sharpturn %d; cube pruning %d verbose %d;\n",
+               beamsize, use_vienna, is_candidate_list, sharpturn, is_cube_pruning, is_verbose
+               //seq_file_name.c_str()
+               ); fflush(stdout);
+    }
 
     BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning, is_verbose);
 
@@ -955,11 +956,27 @@ int main(int argc, char** argv){
             continue;
         }
 
-        printf("seq:\n%s\n", seq.c_str()); // passed
+        if (regularprint)
+            printf("seq:\n%s\n", seq.c_str()); // passed
+        else
+            printf("%s\n", seq.c_str());
 
         BeamCKYParser::DecoderResult result = parser.parse(seq);
 
-        printf(">structure\n%s\n\n", result.structure.c_str());
+        if (regularprint) {
+            if (use_vienna)
+                printf("Energy(kcal/mol): %.2f\n", result.score / -100.0);
+            else
+                printf("Viterbi score: %f\n", result.score);
+            printf("Time: %f len: %d score %f",
+                   result.time, int(seq.length()), result.score );
+
+            printf(">structure\n%s\n\n", result.structure.c_str());
+        }
+        else {
+            double printscore = use_vienna ? (result.score / -100.0) : result.score;
+            printf("%s (%.2f)\n", result.structure.c_str(), printscore);
+        }
 
         ++num;
         total_len += seq.length();
@@ -971,8 +988,10 @@ int main(int argc, char** argv){
     // f_seq.close();
 
     double dnum = (double)num;
-    printf("num_seq: %d; avg_len: %.1f ", num, total_len/dnum);
-    printf("avg_score: %.4f; avg_time: %.3f; tot_time: %f; avg_states: %.1f\n",
-           total_score/dnum, total_time/dnum, total_time, total_states/dnum);
+    if (regularprint) {
+        printf("num_seq: %d; avg_len: %.1f ", num, total_len/dnum);
+        printf("avg_score: %.4f; avg_time: %.3f; tot_time: %f; avg_states: %.1f\n",
+               total_score/dnum, total_time/dnum, total_time, total_states/dnum);
+    }
     return 0;
 }

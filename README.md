@@ -35,17 +35,32 @@ A minimum gcc version of 4.9.0 is required.
 #### To Run
 The LinearFold parser can be run with:
 ```
-echo "SEQUENCE" | linearfold [-b beam_size] [-V / --Vienna] [-v --verbose]
+echo "SEQUENCE" | linearfold [OPTIONS]
 
 OR
 
-cat SEQ_OR_FASTA_FILE | linearfold [-b beam_size] [-V / --Vienna] [-v --verbose]
+cat SEQ_OR_FASTA_FILE | linearfold [OPTIONS]
 ```
 
-1. -V (--Vienna) switches LinearFold-C (by default) to LinearFold-V. 
-2. -v (--verbose) prints print out energy of each loop in the structure.
-3. The default beam_size is 100; use 0 for infinite beam. 
-4. Both FASTA format and pure-sequence format are supported. 
+Both FASTA format and pure-sequence format are supported for input. 
+
+OPTIONS: 
+
+> -b --beam_size
+
+The beam size (default 100). Use 0 for infinite beam. 
+
+> -V --Vienna
+
+Switches LinearFold-C (by default) to LinearFold-V. 
+
+> -v --verbose
+
+Prints out energy of each loop in the structure . (default False)
+
+> -s --simpleprint
+
+The simplest output (two lines: sequence and structure) only. Can be used for pipe. (default False)
 
 For example:
 #### Example Run
@@ -53,4 +68,6 @@ For example:
 cat ../testseq | ./linearfold 
 
 echo "GGGCUCGUAGAUCAGCGGUAGAUCGCUUCCUUCGCAAGGAAGAGGCCCUGGGUUCAAAUCCCAGCGAGUCCACCA" | ./linearfold -b 20 -Vv
+
+echo "GGGCUCGUAGAUCAGCGGUAGAUCGCUUCCUUCGCAAGGAAGAGGCCCUGGGUUCAAAUCCCAGCGAGUCCACCA" | ./linearfold -s
 ```
