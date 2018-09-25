@@ -1,6 +1,6 @@
 /*
  *beamckypar.h*
- header file for beamckypar.
+ header file for beamckypar.cpp (main file of LinearFold).
 
  author: Kai Zhao, Dezhong Deng
  edited by: 02/2018
@@ -24,7 +24,7 @@ enum Manner {
   MANNER_SINGLE,            // 3: single
   MANNER_HELIX,             // 4: helix
   MANNER_MULTI,             // 5: multi = ..M2.
-  MANNER_P_eq_MULTI,        // 6: P = (..multi..)
+  MANNER_P_eq_MULTI,        // 6: P = (multi)
   MANNER_M2_eq_M_plus_P,    // 7: M2 = M + P
   MANNER_M_eq_M2,           // 8: M = M2
   MANNER_M_eq_M_plus_U,     // 9: M = M + U
