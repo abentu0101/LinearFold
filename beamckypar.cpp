@@ -1,6 +1,6 @@
 /*
  *beamckypar.cpp*
- the main LinearFold parser.
+ The main code for LinearFold: Linear-Time RNA Structure Prediction.
 
  author: Kai Zhao, Dezhong Deng
  edited by: 02/2018
