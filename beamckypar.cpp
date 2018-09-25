@@ -113,11 +113,16 @@ void BeamCKYParser::get_parentheses(char* result, string& seq) {
                     }
                 }
                 break;
-            case MANNER_MULTI:
+            case MANNER_MULTI: 
                 p = i + state.trace.paddings.l1;
                 q = j - state.trace.paddings.l2;
                 stk.push(make_tuple(p, q, bestM2[q][p]));
                 break;
+        case MANNER_MULTI_eq_MULTI_plus_U:
+            p = i + state.trace.paddings.l1;
+            q = j - state.trace.paddings.l2;
+            stk.push(make_tuple(p, q, bestM2[q][p]));
+            break;
             case MANNER_P_eq_MULTI:
                 result[i] = '(';
                 result[j] = ')';
@@ -481,7 +486,7 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                             newscore = state.score + score_multi_unpaired(j, jnext - 1);
                         // this candidate must be the best one at [i, jnext]
                         // so no need to check the score
-                        update_if_better(bestMulti[jnext][i], newscore, MANNER_MULTI,
+                        update_if_better(bestMulti[jnext][i], newscore, MANNER_MULTI_eq_MULTI_plus_U,
                                          new_l1,
                                          static_cast<char>(new_l2)
                         );
