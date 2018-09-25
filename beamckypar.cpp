@@ -118,11 +118,11 @@ void BeamCKYParser::get_parentheses(char* result, string& seq) {
                 q = j - state.trace.paddings.l2;
                 stk.push(make_tuple(p, q, bestM2[q][p]));
                 break;
-        case MANNER_MULTI_eq_MULTI_plus_U:
-            p = i + state.trace.paddings.l1;
-            q = j - state.trace.paddings.l2;
-            stk.push(make_tuple(p, q, bestM2[q][p]));
-            break;
+            case MANNER_MULTI_eq_MULTI_plus_U:
+                p = i + state.trace.paddings.l1;
+                q = j - state.trace.paddings.l2;
+                stk.push(make_tuple(p, q, bestM2[q][p]));
+                break;
             case MANNER_P_eq_MULTI:
                 result[i] = '(';
                 result[j] = ')';
