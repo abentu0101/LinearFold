@@ -763,7 +763,7 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
                     for (int p = i-1; p > std::max(i - SINGLE_MAX_LEN, -1); --p) {
                         int nucp = nucs[p];
                         int q = next_pair[nucp][j];
-                        if (q != -1 && ((i - p) + (q - j) <= SINGLE_MAX_LEN)) {
+                        if (q != -1 && ((i - p) <= SINGLE_MAX_LEN)) {
                             // the current shape is p..i M2 j ..q
 
                             double newscore;
