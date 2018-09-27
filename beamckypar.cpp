@@ -222,7 +222,6 @@ void BeamCKYParser::get_parentheses(char* result, string& seq) {
     return;
 }
 
-
 unsigned long quickselect_partition(vector<pair<double, int>>& scores, unsigned long lower, unsigned long upper) {
     double pivot = scores[upper].first;
     while (lower < upper) {
