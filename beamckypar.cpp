@@ -850,9 +850,12 @@ BeamCKYParser::DecoderResult BeamCKYParser::parse(string& seq) {
     double elapsed_time = endtime.tv_sec - starttime.tv_sec + (endtime.tv_usec-starttime.tv_usec)/1000000.0;
 
     unsigned long nos_tot = nos_H + nos_P + nos_M2 + nos_Multi + nos_M + nos_C;
-    // printf("Time: %f len: %d score %f #states %lu H %lu P %lu M2 %lu Multi %lu M %lu C %lu\n",
-    //        elapsed_time, seq_length, viterbi.score, nos_tot,
-    //        nos_H, nos_P, nos_M2, nos_Multi, nos_M, nos_C);
+
+    // lhuang
+    if (is_verbose)
+      printf("Time: %f len: %d score %f #states %lu H %lu P %lu M2 %lu Multi %lu M %lu C %lu\n",
+	     elapsed_time, seq_length, viterbi.score, nos_tot,
+	     nos_H, nos_P, nos_M2, nos_Multi, nos_M, nos_C);
 
     fflush(stdout);
 
@@ -942,8 +945,6 @@ int main(int argc, char** argv){
                ); fflush(stdout);
     }
 
-    BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning, is_verbose);
-
     // go through the seq file to decode each seq
     //for (string seq; getline(f_seq, seq);) {
     for (string seq; getline(cin, seq);) {
@@ -965,6 +966,9 @@ int main(int argc, char** argv){
         else
             printf("%s\n", seq.c_str());
 
+	// lhuang: moved inside loop, fixing an obscure but crucial bug in initialization
+	BeamCKYParser parser(beamsize, use_vienna, is_candidate_list, !sharpturn, is_cube_pruning, is_verbose);
+    
         BeamCKYParser::DecoderResult result = parser.parse(seq);
 
         if (regularprint) {
